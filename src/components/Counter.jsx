@@ -21,8 +21,7 @@ const Counter = () => {
   }, []);
 
   const increment = () => {
-    // Dodaj trenutnu vrednost kao query parametar
-    fetch(`${API_BASE}/increment?current_value=${count}`, {
+    fetch(`${API_BASE}/increment`, {
       method: 'POST'
     })
       .then(response => response.json())
@@ -33,8 +32,7 @@ const Counter = () => {
   };
 
   const decrement = () => {
-    // Dodaj trenutnu vrednost kao query parametar
-    fetch(`${API_BASE}/decrement?current_value=${count}`, {
+    fetch(`${API_BASE}/decrement`, {
       method: 'POST'
     })
       .then(response => response.json())
