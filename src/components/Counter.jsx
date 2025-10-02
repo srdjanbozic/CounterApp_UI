@@ -21,35 +21,58 @@ const Counter = () => {
   }, []);
 
   const increment = () => {
-    fetch(`${API_BASE}/increment`, {  // ← UKLONI /counter
+    const newCount = count + 1;
+    setCount(newCount); // Optimistički ažuriraj odmah
+
+    fetch(`${API_BASE}/increment`, {
       method: 'POST'
     })
       .then(response => response.json())
-      .then(data => setCount(data.value))
+      .then(data => {
+        // Sync sa serverom - samo ako se razlikuje
+        if (data.value !== newCount) {
+          setCount(data.value);
+        }
+      })
       .catch(() => {
         console.error('Failed to increment count');
+        // Vrati na staru vrednost ako fail
+        setCount(count);
       });
   };
 
   const decrement = () => {
+    const newCount = count - 1;
+    setCount(newCount);
+
     fetch(`${API_BASE}/decrement`, {
       method: 'POST'
     })
       .then(response => response.json())
-      .then(data => setCount(data.value))
+      .then(data => {
+        if (data.value !== newCount) {
+          setCount(data.value);
+        }
+      })
       .catch(() => {
         console.error('Failed to decrement count');
+        setCount(count);
       });
   };
 
   const reset = () => {
+    setCount(0);
+
     fetch(`${API_BASE}/reset`, {
       method: 'POST'
     })
       .then(response => response.json())
-      .then(data => setCount(data.value))
+      .then(data => {
+        setCount(data.value);
+      })
       .catch(() => {
         console.error('Failed to reset count');
+        setCount(count);
       });
   };
 
