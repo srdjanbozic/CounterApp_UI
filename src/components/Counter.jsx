@@ -1,97 +1,80 @@
-// src/components/Counter.jsx
+import { useState, useEffect } from 'react';
+import './Counter.css';
 
-import { useState, useEffect } from 'react'
-import '../App.css'
+const Counter = () => {
+  const [count, setCount] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-const API_URL = 'http://localhost:8000'
+  // Fetch initial count from backend
+  useEffect(() => {
+    fetch('http://localhost:8000/api/counter')
+      .then(response => response.json())
+      .then(data => {
+        setCount(data.count);
+        setLoading(false);
+      })
+      .catch(() => {
+        console.error('Failed to fetch initial count');
+        setLoading(false);
+      });
+  }, []);
 
-function Counter() {
-    const [count, setCount] = useState(0)
-    const [error, setError] = useState(null)
+  const increment = () => {
+    fetch('http://localhost:8000/api/counter/increment', {
+      method: 'POST'
+    })
+      .then(response => response.json())
+      .then(data => setCount(data.count))
+      .catch(() => {
+        console.error('Failed to increment count');
+      });
+  };
 
-    useEffect(() => {
-        fetchCounter()
-    }, [])
+  const decrement = () => {
+    fetch('http://localhost:8000/api/counter/decrement', {
+      method: 'POST'
+    })
+      .then(response => response.json())
+      .then(data => setCount(data.count))
+      .catch(() => {
+        console.error('Failed to decrement count');
+      });
+  };
 
-    const fetchCounter = async () => {
-        try {
-            const response = await fetch(`${API_URL}/api/counter`)
-            const data = await response.json()
-            setCount(data.value)
-            setError(null)
-        } catch (err) {
-            setError('Failed to fetch counter')
-            console.error(err)
-        }
-    }
+  const reset = () => {
+    fetch('http://localhost:8000/api/counter/reset', {
+      method: 'POST'
+    })
+      .then(response => response.json())
+      .then(data => setCount(data.count))
+      .catch(() => {
+        console.error('Failed to reset count');
+      });
+  };
 
-    const handleIncrement = async () => {
-        setCount(prev => prev + 1)  // Optimistički update
-        try {
-            await fetch(`${API_URL}/api/increment`, { method: 'POST' })
-            setError(null)
-        } catch (err) {
-            setError('Failed to increment')
-            fetchCounter()  // Re-fetch ako greška
-        }
-    }
+  if (loading) {
+    return <div className="counter">Loading...</div>;
+  }
 
-    const handleDecrement = async () => {
-        setCount(prev => prev - 1)
-        try {
-            await fetch(`${API_URL}/api/decrement`, { method: 'POST' })
-            setError(null)
-        } catch (err) {
-            setError('Failed to decrement')
-            fetchCounter()
-        }
-    }
+  return (
+    <div className="counter">
+      <h1>Counter App</h1>
+      <div className="count-display">
+        <span className="count">{count}</span>
+      </div>
+      <div className="buttons">
+        <button onClick={decrement} className="btn btn-decrement">
+          Decrement
+        </button>
+        <button onClick={reset} className="btn btn-reset">
+          Reset
+        </button>
+        <button onClick={increment} className="btn btn-increment">
+          Increment
+        </button>
+      </div>
+    </div>
+  );
+};
 
-    const handleReset = async () => {
-        setCount(0)
-        try {
-            await fetch(`${API_URL}/api/reset`, { method: 'POST' })
-            setError(null)
-        } catch (err) {
-            setError('Failed to reset')
-            fetchCounter()
-        }
-    }
-
-    return (
-        <div className="counter-container">
-            <h1>Counter App</h1>
-
-            <div className="counter-display">
-                <h2>{count}</h2>
-            </div>
-
-            {error && <p className="error">{error}</p>}
-
-            <div className="button-group">
-                <button
-                    onClick={handleDecrement}
-                    className="btn btn-danger"
-                >
-                    -1
-                </button>
-
-                <button
-                    onClick={handleIncrement}
-                    className="btn btn-primary"
-                >
-                    +1
-                </button>
-
-                <button
-                    onClick={handleReset}
-                    className="btn btn-secondary"
-                >
-                    Reset
-                </button>
-            </div>
-        </div>
-    )
-}
-
-export default Counter
+export default Counter;
