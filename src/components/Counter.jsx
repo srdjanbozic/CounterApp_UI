@@ -5,7 +5,7 @@ const Counter = () => {
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const API_BASE = "http://backend-service.counterapp.svc.cluster.local:8000/api";
+  const API_BASE = "/api";
 
   useEffect(() => {
     fetch(`${API_BASE}/counter`)
