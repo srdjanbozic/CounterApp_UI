@@ -5,7 +5,7 @@ const Counter = () => {
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const API_BASE = "http://backend-service.counterapp:8000/api";
+  const API_BASE = "http://backend-service.counterapp.svc.cluster.local:8000/api";
 
   useEffect(() => {
     fetch(`${API_BASE}/counter`)
@@ -21,7 +21,7 @@ const Counter = () => {
   }, []);
 
   const increment = () => {
-    fetch(`${API_BASE}/increment`, {
+    fetch(`${API_BASE}/counter/increment`, {
       method: 'POST'
     })
       .then(response => response.json())
@@ -32,7 +32,7 @@ const Counter = () => {
   };
 
   const decrement = () => {
-    fetch(`${API_BASE}/decrement`, {
+    fetch(`${API_BASE}/counter/decrement`, {
       method: 'POST'
     })
       .then(response => response.json())
@@ -43,7 +43,7 @@ const Counter = () => {
   };
 
   const reset = () => {
-    fetch(`${API_BASE}/reset`, {
+    fetch(`${API_BASE}/counter/reset`, {
       method: 'POST'
     })
       .then(response => response.json())
