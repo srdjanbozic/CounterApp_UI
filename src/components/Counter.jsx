@@ -21,58 +21,37 @@ const Counter = () => {
   }, []);
 
   const increment = () => {
-    const newCount = count + 1;
-    setCount(newCount); // Optimistički ažuriraj odmah
-
-    fetch(`${API_BASE}/increment`, {
+    // Dodaj trenutnu vrednost kao query parametar
+    fetch(`${API_BASE}/increment?current_value=${count}`, {
       method: 'POST'
     })
       .then(response => response.json())
-      .then(data => {
-        // Sync sa serverom - samo ako se razlikuje
-        if (data.value !== newCount) {
-          setCount(data.value);
-        }
-      })
+      .then(data => setCount(data.value))
       .catch(() => {
         console.error('Failed to increment count');
-        // Vrati na staru vrednost ako fail
-        setCount(count);
       });
   };
 
   const decrement = () => {
-    const newCount = count - 1;
-    setCount(newCount);
-
-    fetch(`${API_BASE}/decrement`, {
+    // Dodaj trenutnu vrednost kao query parametar
+    fetch(`${API_BASE}/decrement?current_value=${count}`, {
       method: 'POST'
     })
       .then(response => response.json())
-      .then(data => {
-        if (data.value !== newCount) {
-          setCount(data.value);
-        }
-      })
+      .then(data => setCount(data.value))
       .catch(() => {
         console.error('Failed to decrement count');
-        setCount(count);
       });
   };
 
   const reset = () => {
-    setCount(0);
-
     fetch(`${API_BASE}/reset`, {
       method: 'POST'
     })
       .then(response => response.json())
-      .then(data => {
-        setCount(data.value);
-      })
+      .then(data => setCount(data.value))
       .catch(() => {
         console.error('Failed to reset count');
-        setCount(count);
       });
   };
 
