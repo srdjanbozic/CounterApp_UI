@@ -14,15 +14,14 @@ spec:
       labels:
         app: counter-frontend
     spec:
+      imagePullSecrets:
+      - name: dockerhub-secret
       containers:
       - name: counter-frontend
-        image: counterapp-ui:latest
-        imagePullPolicy: Never
+        image: zoddo16/counterapp-ui:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
-        env:
-        - name: REACT_APP_API_URL
-          value: "http://backend-service:8000"
 ---
 apiVersion: v1
 kind: Service
@@ -32,7 +31,7 @@ spec:
   selector:
     app: counter-frontend
   ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
+  - protocol: TCP
+    port: 80
+    targetPort: 80
   type: NodePort
