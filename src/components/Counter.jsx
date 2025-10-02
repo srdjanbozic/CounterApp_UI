@@ -21,7 +21,7 @@ const Counter = () => {
   }, []);
 
   const increment = () => {
-    fetch(`${API_BASE}/counter/increment`, {
+    fetch(`${API_BASE}/increment`, {  // ← UKLONI /counter
       method: 'POST'
     })
       .then(response => response.json())
@@ -32,7 +32,7 @@ const Counter = () => {
   };
 
   const decrement = () => {
-    fetch(`${API_BASE}/counter/decrement`, {
+    fetch(`${API_BASE}/decrement`, {
       method: 'POST'
     })
       .then(response => response.json())
@@ -43,7 +43,7 @@ const Counter = () => {
   };
 
   const reset = () => {
-    fetch(`${API_BASE}/counter/reset`, {
+    fetch(`${API_BASE}/reset`, {
       method: 'POST'
     })
       .then(response => response.json())
