@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  labels:
+    app: counter-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: counter-frontend
+  template:
+    metadata:
+      labels:
+        app: counter-frontend
+    spec:
+      containers:
+      - name: counter-frontend
+        image: counterapp-ui:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 80
+        env:
+        - name: REACT_APP_API_URL
+          value: "http://backend-service:8000"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+spec:
+  selector:
+    app: counter-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: NodePort

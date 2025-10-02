@@ -1,0 +1,97 @@
+/* src/App.css */
+
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.counter-container {
+  padding: 2rem;
+}
+
+.counter-display {
+  margin: 2rem 0;
+  padding: 2rem;
+  background: #1a1a1a;
+  border-radius: 8px;
+}
+
+.counter-display h2 {
+  font-size: 4rem;
+  margin: 0;
+  color: #646cff;
+}
+
+.button-group {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.btn {
+  padding: 0.8rem 1.5rem;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 500;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #646cff;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #535bf2;
+}
+
+.btn-danger {
+  background: #f44336;
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #da190b;
+}
+
+.btn-secondary {
+  background: #666;
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #555;
+}
+
+.error {
+  color: #f44336;
+  margin: 1rem 0;
+}
+
+.loading {
+  color: #646cff;
+  margin: 1rem 0;
+}
+
+.counter-display h2 {
+  font-size: 4rem;
+  margin: 0;
+  color: #646cff;
+  transition: transform 0.1s ease;
+  /* Smooth animacija */
+}
+
+.counter-display h2:active {
+  transform: scale(1.1);
+  /* Mali "bounce" effect */
+}
