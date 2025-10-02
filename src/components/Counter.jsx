@@ -5,12 +5,13 @@ const Counter = () => {
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // Fetch initial count from backend
+  const API_BASE = "http://backend-service:8000/api";
+
   useEffect(() => {
-    fetch('http://localhost:8000/api/counter')
+    fetch(`${API_BASE}/counter`)
       .then(response => response.json())
       .then(data => {
-        setCount(data.count);
+        setCount(data.value);
         setLoading(false);
       })
       .catch(() => {
@@ -20,33 +21,33 @@ const Counter = () => {
   }, []);
 
   const increment = () => {
-    fetch('http://localhost:8000/api/counter/increment', {
+    fetch(`${API_BASE}/increment`, {
       method: 'POST'
     })
       .then(response => response.json())
-      .then(data => setCount(data.count))
+      .then(data => setCount(data.value))
       .catch(() => {
         console.error('Failed to increment count');
       });
   };
 
   const decrement = () => {
-    fetch('http://localhost:8000/api/counter/decrement', {
+    fetch(`${API_BASE}/decrement`, {
       method: 'POST'
     })
       .then(response => response.json())
-      .then(data => setCount(data.count))
+      .then(data => setCount(data.value))
       .catch(() => {
         console.error('Failed to decrement count');
       });
   };
 
   const reset = () => {
-    fetch('http://localhost:8000/api/counter/reset', {
+    fetch(`${API_BASE}/reset`, {
       method: 'POST'
     })
       .then(response => response.json())
-      .then(data => setCount(data.count))
+      .then(data => setCount(data.value))
       .catch(() => {
         console.error('Failed to reset count');
       });
