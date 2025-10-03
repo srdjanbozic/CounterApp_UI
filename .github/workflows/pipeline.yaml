@@ -35,35 +35,24 @@ jobs:
     - name: Terraform Init
       run: terraform -chdir=infra init
       
-    # 🔥 DODAJ DEBUG
-    - name: Debug - Check State Files
-      run: |
-        echo "=== Checking state files ==="
-        ls -la /home/zodd/actions-runner-frontend/_work/_temp/ || echo "Temp folder not found"
-        ls -la infra/ || echo "Infra folder not found"
-        echo "=== Current directory ==="
-        pwd
-        ls -la
-        
-    - name: Restore Terraform State
-      run: |
-        echo "=== Restoring state ==="
-        if [ -f "/home/zodd/actions-runner-frontend/_work/_temp/terraform.tfstate" ]; then
-          echo "✅ State found - restoring..."
-          cp "/home/zodd/actions-runner-frontend/_work/_temp/terraform.tfstate" infra/terraform.tfstate
-          ls -la infra/terraform.tfstate
-        else
-          echo "❌ No previous state found, starting fresh..."
-        fi
-        
+    # 🔥 KORISTI GITHUB CACHE UMESTO MANUAL STATE
+    - name: Restore Terraform State from Cache
+      uses: actions/cache/restore@v3
+      with:
+        path: infra/terraform.tfstate
+        key: terraform-state-${{ github.ref }}
+        restore-keys: |
+          terraform-state-
+          
     - name: Terraform Apply
       run: |
         terraform -chdir=infra apply -auto-approve \
           -var="frontend_image=zoddo16/counterapp-ui:${{ github.sha }}" \
           -var="backend_image=zoddo16/counter-backend:latest"
         
-    - name: Save Terraform State  
-      run: |
-        echo "=== Saving state ==="
-        cp infra/terraform.tfstate "/home/zodd/actions-runner-frontend/_work/_temp/terraform.tfstate" || true
-        ls -la "/home/zodd/actions-runner-frontend/_work/_temp/terraform.tfstate" || echo "State save failed"
+    # 🔥 KORISTI GITHUB CACHE UMESTO MANUAL STATE
+    - name: Save Terraform State to Cache
+      uses: actions/cache/save@v3
+      with:
+        path: infra/terraform.tfstate
+        key: terraform-state-${{ github.ref }}
