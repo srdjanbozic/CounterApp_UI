@@ -35,21 +35,6 @@ jobs:
     - name: Terraform Init
       run: terraform -chdir=infra init
       
-    - name: Import Existing Resources to Terraform State
-      run: |
-        if kubectl get namespace counterapp &>/dev/null; then
-          echo "Importing existing resources to Terraform state..."
-          terraform -chdir=infra import kubernetes_namespace.counterapp counterapp 2>/dev/null || true
-          terraform -chdir=infra import kubernetes_deployment.frontend counterapp/frontend-deployment 2>/dev/null || true
-          terraform -chdir=infra import kubernetes_deployment.backend counterapp/backend-deployment 2>/dev/null || true
-          terraform -chdir=infra import kubernetes_service.frontend counterapp/frontend-service 2>/dev/null || true
-          terraform -chdir=infra import kubernetes_service.backend counterapp/backend-service 2>/dev/null || true
-          terraform -chdir=infra import kubernetes_ingress_v1.counterapp counterapp/counter-ingress 2>/dev/null || true
-          echo " Resources imported to Terraform state"
-        else
-          echo " No existing resources found, Terraform will create them"
-        fi
-          
     - name: Terraform Apply
       run: |
         terraform -chdir=infra apply -auto-approve \
