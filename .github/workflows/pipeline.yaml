@@ -35,8 +35,22 @@ jobs:
     - name: Terraform Init
       run: terraform -chdir=infra init
       
+    - name: Restore Terraform State
+      run: |
+        if [ -f "/home/zodd/actions-runner-frontend/_work/_temp/terraform.tfstate" ]; then
+          echo "Restoring terraform state..."
+          cp "/home/zodd/actions-runner-frontend/_work/_temp/terraform.tfstate" infra/terraform.tfstate
+        else
+          echo "No previous state found, starting fresh..."
+        fi
+        
     - name: Terraform Apply
       run: |
         terraform -chdir=infra apply -auto-approve \
           -var="frontend_image=zoddo16/counterapp-ui:${{ github.sha }}" \
           -var="backend_image=zoddo16/counter-backend:latest"
+        
+    - name: Save Terraform State  
+      run: |
+        echo "Saving terraform state for next run..."
+        cp infra/terraform.tfstate "/home/zodd/actions-runner-frontend/_work/_temp/terraform.tfstate" || true
