@@ -1,57 +1,68 @@
-name: Deploy Frontend with Terraform
+name: Build and Deploy Frontend
 
 on:
   push:
     branches: [ main, dev, qa, prod ]
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: self-hosted
-
+    concurrency:
+      group: frontend-${{ github.ref_name }}
+      cancel-in-progress: false
+    
+    env:
+      ENV: ${{ github.ref_name == 'main' && 'prod' || github.ref_name }}
+      IMAGE: zoddo16/counterapp-ui
+    
     steps:
     - name: Checkout Frontend Code
       uses: actions/checkout@v4
-
+      with:
+        fetch-depth: 0
+    
+    - name: Generate Image Tag
+      id: tags
+      run: |
+        SHORT_SHA=$(git rev-parse --short=7 HEAD)
+        BRANCH=${{ github.ref_name }}
+        echo "sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+        echo "branch=${BRANCH}" >> $GITHUB_OUTPUT
+        echo "Building: ${IMAGE}:${SHORT_SHA}"
+    
     - name: Login to DockerHub
       uses: docker/login-action@v2
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
-
-    - name: Build and Push Frontend Docker Image
+    
+    - name: Build and Push Image
       run: |
-        docker build -t zoddo16/counterapp-ui:${{ github.sha }} .
-        docker push zoddo16/counterapp-ui:${{ github.sha }}
-
-    - name: Checkout Infrastructure Code
-      uses: actions/checkout@v4
-      with:
-        repository: srdjanbozic/CounterApp_Infra
-        path: infra
-
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
-      
-    - name: Terraform Init
-      run: terraform -chdir=infra init
-      
-    - name: Import Existing Resources to Terraform State
+        TAG=${{ steps.tags.outputs.sha }}
+        BRANCH=${{ steps.tags.outputs.branch }}
+        
+        docker build -t ${IMAGE}:${TAG} .
+        docker push ${IMAGE}:${TAG}
+        
+        docker tag ${IMAGE}:${TAG} ${IMAGE}:${{ env.ENV }}-latest
+        docker push ${IMAGE}:${{ env.ENV }}-latest
+        
+        docker tag ${IMAGE}:${TAG} ${IMAGE}:${BRANCH}
+        docker push ${IMAGE}:${BRANCH}
+    
+    - name: Update Deployment
       run: |
-        if kubectl get namespace counterapp &>/dev/null; then
-          echo "Importing existing resources to Terraform state..."
-          terraform -chdir=infra import kubernetes_namespace.counterapp counterapp 2>/dev/null || true
-          terraform -chdir=infra import kubernetes_deployment.frontend counterapp/frontend-deployment 2>/dev/null || true
-          terraform -chdir=infra import kubernetes_deployment.backend counterapp/backend-deployment 2>/dev/null || true
-          terraform -chdir=infra import kubernetes_service.frontend counterapp/frontend-service 2>/dev/null || true
-          terraform -chdir=infra import kubernetes_service.backend counterapp/backend-service 2>/dev/null || true
-          terraform -chdir=infra import kubernetes_ingress_v1.counterapp counterapp/counter-ingress 2>/dev/null || true
-          echo " Resources imported to Terraform state"
-        else
-          echo " No existing resources found, Terraform will create them"
-        fi
-          
-    - name: Terraform Apply
+        NAMESPACE=counterapp-${{ env.ENV }}
+        
+        kubectl set image deployment/frontend-deployment \
+          counter-frontend=${IMAGE}:${{ steps.tags.outputs.sha }} \
+          -n ${NAMESPACE}
+        
+        kubectl rollout status deployment/frontend-deployment \
+          -n ${NAMESPACE} --timeout=300s
+    
+    - name: Verify Deployment
       run: |
-        terraform -chdir=infra apply -auto-approve \
-          -var="frontend_image=zoddo16/counterapp-ui:${{ github.sha }}" \
-          -var="backend_image=zoddo16/counter-backend:latest"
+        NAMESPACE=counterapp-${{ env.ENV }}
+        echo "✅ Deployment completed!"
+        kubectl get pods -n ${NAMESPACE} -l app=counter-frontend
