@@ -1,12 +1,19 @@
-name: Deploy Frontend
+name: Build and Deploy Frontend
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, dev, qa, prod ]
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: self-hosted
+    concurrency:
+      group: frontend-${{ github.ref_name }}
+      cancel-in-progress: false
+    
+    env:
+      ENV: ${{ github.ref_name == 'main' && 'prod' || github.ref_name }}
+      IMAGE: zoddo16/counterapp-ui
     
     steps:
     - name: Checkout Frontend Code
@@ -18,8 +25,10 @@ jobs:
       id: tags
       run: |
         SHORT_SHA=$(git rev-parse --short=7 HEAD)
+        BRANCH=${{ github.ref_name }}
         echo "sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
-        echo "Building image: zoddo16/counterapp-ui:${SHORT_SHA}"
+        echo "branch=${BRANCH}" >> $GITHUB_OUTPUT
+        echo "Building: ${IMAGE}:${SHORT_SHA}"
     
     - name: Login to DockerHub
       uses: docker/login-action@v2
@@ -27,39 +36,41 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
     
-    - name: Build and Push Frontend Image
+    - name: Build and Push Image
       run: |
-        IMAGE=zoddo16/counterapp-ui
         TAG=${{ steps.tags.outputs.sha }}
+        BRANCH=${{ steps.tags.outputs.branch }}
         
+        # Build and push with SHA tag
         docker build -t ${IMAGE}:${TAG} .
         docker push ${IMAGE}:${TAG}
         
-        # Also tag as main
-        docker tag ${IMAGE}:${TAG} ${IMAGE}:main
-        docker push ${IMAGE}:main
+        # Tag and push with env-latest
+        docker tag ${IMAGE}:${TAG} ${IMAGE}:${{ env.ENV }}-latest
+        docker push ${IMAGE}:${{ env.ENV }}-latest
+        
+        # Tag and push with branch name (backward compatibility)
+        docker tag ${IMAGE}:${TAG} ${IMAGE}:${BRANCH}
+        docker push ${IMAGE}:${BRANCH}
+        
+        echo "Pushed tags: ${TAG}, ${{ env.ENV }}-latest, ${BRANCH}"
     
-    - name: Checkout Infrastructure Code
-      uses: actions/checkout@v4
-      with:
-        repository: srdjanbozic/CounterApp_Infra
-        path: infra
-    
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v2
-      with:
-        terraform_version: 1.5.0
-    
-    - name: Terraform Init
-      run: terraform -chdir=infra init
-    
-    - name: Terraform Apply
+    - name: Update Deployment
       run: |
-        terraform -chdir=infra apply -auto-approve \
-          -var="frontend_image=zoddo16/counterapp-ui:${{ steps.tags.outputs.sha }}" \
-          -var="backend_image=zoddo16/counter-backend:main"
+        NAMESPACE=counterapp-${{ env.ENV }}
+        
+        # Set new image
+        kubectl set image deployment/frontend-deployment \
+          counter-frontend=${IMAGE}:${{ steps.tags.outputs.sha }} \
+          -n ${NAMESPACE}
+        
+        # Wait for rollout to complete
+        kubectl rollout status deployment/frontend-deployment \
+          -n ${NAMESPACE} \
+          --timeout=300s
     
     - name: Verify Deployment
       run: |
-        kubectl get pods -n counterapp
-        kubectl rollout status deployment/frontend-deployment -n counterapp --timeout=300s
+        NAMESPACE=counterapp-${{ env.ENV }}
+        echo " Deployment completed successfully!"
+        kubectl get pods -n ${NAMESPACE} -l app=counter-frontend
