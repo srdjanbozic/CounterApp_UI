@@ -2,7 +2,7 @@ name: Deploy Frontend with Terraform
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, dev, qa, prod ]
 
 jobs:
   deploy:
